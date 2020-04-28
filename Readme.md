@@ -5,7 +5,7 @@
 **feathers-mobx** is an integration of the Feathers Client for `mobx`.  
 It can be used with any mobx client like `react-mobx` and `vue-mobx`.  
 
-#### [documentation](feathers-mobx.github.io)
+#### [documentation](https://florianguyonnet.github.io/feathers-mobx/#/)
 #### [example](example/)
 
 ## Quick start
