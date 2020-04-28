@@ -10,5 +10,5 @@ const options = {};
 export default {
   todoStore: createServiceStore(feathers, 'todos', options),
   userStore: createServiceStore(feathers, 'users', options),
-  userStore: createAuthStore(feathers, options),
+  authStore: createAuthStore(feathers, options),
 };
