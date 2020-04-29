@@ -1,0 +1,22 @@
+.app {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.todos {
+  margin-top: 24px;
+}
+
+.todo {
+  padding: 4px 0;
+}
+
+input {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.error {
+  color: red;
+}

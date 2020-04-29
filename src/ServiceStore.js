@@ -30,49 +30,54 @@ export default class ServiceStore {
   @observable errorOnPatch;
   @observable errorOnRemove;
 
-  constructor(feathers, name) {
+  constructor(feathers, name, options) {
     this.name = name;
     this.service = feathers.service(name);
+    this.idField = options.idField || this.idField;
     // if service has socket
     this.handleEvents();
   }
 
   handleEvents() {
     this.service.on('created', item => {
-      console.log('created');
+      this.setItems([item]);
     });
-    this.service.on('updated', item => {handleEvents
-      console.log('updated');
+    this.service.on('updated', item => {
+      this.setItems([item]);
     });
     this.service.on('patched', item => {
-      console.log('patched');
+      this.setItems([item]);
     });
     this.service.on('removed', item => {
-      console.log('removed');
+      this.removeItems([item]);
     });
   }
 
-  setItems(items) {
+  setItems(data) {
+    let items = data;
     if (items.total) {
       this.pagination.items = items.data;
       this.pagination.limit = items.limit;
       this.pagination.skip = items.skip;
       this.pagination.total = items.total;
+      data = items.data;
     }
-    this.items = {
-      ...items,
+    this.items = [
+      ...data,
       ...(this.items.filter((item) => 
-        items.find(i => i[this.idField] === item[this.idField])
+        !data.find(i => i[this.idField] === item[this.idField])
       )),
-    };
+    ];
   }
 
   setItem(item) {
     this.item = item;
+    this.setItems([item]); 
   }
 
   patchItems(items) {
     this.setItems(items);
+    this.setItems([item]);
     // update single item
   }
 
@@ -153,10 +158,9 @@ export default class ServiceStore {
   @action
   async create(data, params) {
     try {
-      // @todo multiple create handler
       this.isCreatePending = true;
       const item = await this.service.create(data, params);
-      this.setItem(item)
+      this.setItem(item);
     } catch (error) {
       this.errorOnCreate = error;
     } finally {

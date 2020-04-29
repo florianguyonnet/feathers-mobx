@@ -19,9 +19,9 @@ export default class ServiceStore {
 
   constructor(app, options) {
     this.app = app;
-    this.idField = options.idField;
-    this.userService = options.userService;
-    this.entityField = options.entityField;
+    this.idField = options.idField || this.idField;
+    this.userService = options.userService || this.userService;
+    this.entityField = options.entityField || this.entityField;
   }
 
   @action.bound
@@ -57,9 +57,9 @@ export default class ServiceStore {
   async authenticateHandler(data) {
     this.accessToken = data.accessToken;
     this.payload = data;
-
-    let user = data[entityField];
-    
+  
+    let user = data[this.entityField];
+  
     if (user) {
       this.user = user;
     } else if (
@@ -73,28 +73,28 @@ export default class ServiceStore {
   @action
   async authenticate(data) {
     try {
-      this.isFindPending = true;
+      this.isAuthenticatePending = true;
       this.authenticateHandler(
         await this.app.authenticate(data)
       );
     } catch (error) {
-      this.errorOnFind = error;
+      this.errorOnAuthenticate = error;
     } finally {
-      this.isFindPending = false;
+      this.isAuthenticatePending = false;
     }
   }
 
   @action
-  async reAuthenticate(params) {
+  async reAuthenticate(data) {
     try {
-      this.isFindPending = true;
+      this.isAuthenticatePending = true;
       this.authenticateHandler(
         await this.app.reAuthenticate(data)
       );
     } catch (error) {
-      this.errorOnFind = error;
+      this.errorOnAuthenticate = error;
     } finally {
-      this.isFindPending = false;
+      this.isAuthenticatePending = false;
     }
   }
 
@@ -103,7 +103,7 @@ export default class ServiceStore {
     try {
       this.isLogoutPending = true;
       await this.app.logout();
-      this
+      this.clearAll();
     } catch (error) {
       this.errorOnLogout = error;
     } finally {
