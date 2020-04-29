@@ -18,5 +18,15 @@
     "@babel/plugin-proposal-class-properties": "^7.8.3",
     "@babel/plugin-proposal-decorators": "^7.8.3",
     "@babel/preset-env": "^7.9.5"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/florianguyonnet/feathers-mobx.git"
+  },
+  "author": "Florian Guyonnet",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/florianguyonnet/feathers-mobx/issues"
+  },
+  "homepage": "https://florianguyonnet.github.io/feathers-mobx/#/"
 }
