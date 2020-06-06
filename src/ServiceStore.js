@@ -1,31 +1,53 @@
-import { observable, action } from 'mobx';
+import { observable, computed, action } from 'mobx';
 
 export default class ServiceStore {
-
   service = undefined;
   name = undefined;
   idField = 'id';
+  defaultNamespace = '__default__';
 
-  @observable items = [];
-  @observable item;
+  @computed get items() {
+    return this.namespaces[this.defaultNamespace].items;
+  }
 
-  @observable pagination = {
-    items: [],
-    limit: 0,
-    skip: 0,
-    total: 0,
-  };
+  @computed get item() {
+    return this.namespaces[this.defaultNamespace].item;
+  }
 
-  @observable isFindPending = false;
-  @observable isGetPending = false;
-  @observable isCreatePending = false;
+  @computed get pagination() {
+    return this.namespaces[this.defaultNamespace].pagination;
+  }
+
+  @observable namespaces = {};
+
+  @computed get isFindPending() {
+    return this.namespaces[this.defaultNamespace].isFindPending;
+  }
+
+  @computed get isGetPending() {
+    return this.namespaces[this.defaultNamespace].isGetPending;
+  }
+
+  @computed get isCreatePending() {
+    return this.namespaces[this.defaultNamespace].isCreatePending;
+  }
+
   @observable isUpdatePending = false;
   @observable isPatchPending = false;
   @observable isRemovePending = false;
 
-  @observable errorOnFind;
-  @observable errorOnGet;
-  @observable errorOnCreate;
+  @computed get errorOnFind() {
+    return this.namespaces[this.defaultNamespace].errorOnFind;
+  }
+
+  @computed get errorOnGet() {
+    return this.namespaces[this.defaultNamespace].errorOnGet;
+  }
+
+  @computed get errorOnCreate() {
+    return this.namespaces[this.defaultNamespace].errorOnCreate;
+  }
+
   @observable errorOnUpdate;
   @observable errorOnPatch;
   @observable errorOnRemove;
@@ -34,92 +56,154 @@ export default class ServiceStore {
     this.name = name;
     this.service = feathers.service(name);
     this.idField = options.idField || this.idField;
+
+    this.initializeNamespace(this.defaultNamespace);
     // if service has socket
     this.handleEvents();
   }
 
+  initializeNamespace(name) {
+    this.namespaces[name] = {
+      items: [],
+      item: undefined,
+      pagination: {
+        items: [],
+        limit: 0,
+        skip: 0,
+        total: 0,
+      },
+      isFindPending: false,
+      isGetPending: false,
+      isCreatePending: false,
+      errorOnFind: undefined,
+      errorOnGet: undefined,
+      errorOnCreate: undefined,
+      insertCreated: false,
+    };
+  }
+
+  clearNamespace(name) {
+    this.namespaces[name] = undefined;
+  }
+
+  getNamespace(options = {}) {
+    const ns = options.namespace || this.defaultNamespace;
+
+    if (!this.namespaces[ns]) {
+      this.initializeNamespace(ns);
+    }
+
+    return ns;
+  }
+
   handleEvents() {
-    this.service.on('created', item => {
-      this.setItems([item]);
+    this.service.on('created', (item) => {
+      Object.keys(this.namespaces).map((key) => {
+        if (this.namespaces[key].insertCreated) {
+          this.setItems([item], { namespace: key });
+        }
+      });
     });
-    this.service.on('updated', item => {
-      this.setItems([item]);
+    this.service.on('updated', (item) => {
+      this.updateItem(item);
     });
-    this.service.on('patched', item => {
-      this.setItems([item]);
+    this.service.on('patched', (item) => {
+      this.updateItem(item);
     });
-    this.service.on('removed', item => {
-      this.removeItems([item]);
+    this.service.on('removed', (item) => {
+      this.removeItem(item);
     });
   }
 
-  setItems(data) {
-    let items = data;
-    if (items.total) {
-      this.pagination.items = items.data;
-      this.pagination.limit = items.limit;
-      this.pagination.skip = items.skip;
-      this.pagination.total = items.total;
-      data = items.data;
+  setItems(data, options = {}) {
+    const ns = this.getNamespace(options);
+
+    if (data.total) {
+      this.namespaces[ns].pagination.items = data.data;
+      this.namespaces[ns].pagination.limit = data.limit;
+      this.namespaces[ns].pagination.skip = data.skip;
+      this.namespaces[ns].pagination.total = data.total;
+      data = data.data;
     }
-    this.items = [
+
+    this.namespaces[ns].items = [
+      ...this.namespaces[ns].items.filter(
+        (item) => !data.find((i) => i[this.idField] === item[this.idField])
+      ),
       ...data,
-      ...(this.items.filter((item) => 
-        !data.find(i => i[this.idField] === item[this.idField])
-      )),
     ];
   }
 
-  setItem(item) {
-    this.item = item;
-    this.setItems([item]); 
+  updateItem(item) {
+    Object.keys(this.namespaces).map((ns) => {
+      if (this.namespaces[ns].item?.[this.idField] === item[this.idField]) {
+        this.namespaces[ns].item = item;
+      }
+      this.namespaces[ns].items = this.namespaces[ns].items.map((i) => {
+        return i[this.idField] === item[this.idField] ? item : i;
+      });
+    });
   }
 
-  patchItems(items) {
-    this.setItems(items);
-    this.setItems([item]);
-    // update single item
+  setItem(item, options = {}) {
+    const ns = this.getNamespace(options);
+
+    this.namespaces[ns].item = item;
   }
 
-  removeItems(items) {
-    this.items = {
-      ...(this.items.filter((item) => 
-        items.find(i => i[this.idField] === item[this.idField])
-      )),
-    };
-    // update single item
-  }
-
-  @action.bound
-  clearPending() {
-    this.isFindPending = false;
-    this.isGetPending = false;
-    this.isCreatePending = false;
-    this.isUpdatePending = false;
-    this.isPatchPending = false;
-    this.isRemovePending = false;
-  }
-
-  @action.bound
-  clearErrors() {
-    this.errorOnFind = null;
-    this.errorOnGet = null;
-    this.errorOnCreate = null;
-    this.errorOnUpdate = null;
-    this.errorOnPatch = null;
-    this.errorOnRemove = null;
+  removeItem(item) {
+    Object.keys(this.namespaces).map((ns) => {
+      if (this.namespaces[ns].item?.[this.idField] === item[this.idField]) {
+        this.namespaces[ns].item = undefined;
+      }
+      this.namespaces[ns].items = this.namespaces[ns].items.filter(
+        (i) => i[this.idField] !== item[this.idField]
+      );
+    });
   }
 
   @action.bound
-  clearData() {
-    this.items = [];
-    this.pagination = {
+  clearPending(options = {}) {
+    const ns = this.getNamespace(options);
+
+    this.namespaces[ns].isFindPending = false;
+    this.namespaces[ns].isGetPending = false;
+    this.namespaces[ns].isCreatePending = false;
+
+    if (ns === this.defaultNamespace) {
+      this.isUpdatePending = false;
+      this.isPatchPending = false;
+      this.isRemovePending = false;
+    }
+  }
+
+  @action.bound
+  clearErrors(options = {}) {
+    const ns = this.getNamespace(options);
+
+    this.namespaces[ns].errorOnFind = null;
+    this.namespaces[ns].errorOnGet = null;
+    this.namespaces[ns].errorOnCreate = null;
+
+    if (ns === this.defaultNamespace) {
+      this.errorOnUpdate = null;
+      this.errorOnPatch = null;
+      this.errorOnRemove = null;
+    }
+  }
+
+  @action.bound
+  clearData(options = {}) {
+    const ns = this.getNamespace(options);
+
+    this.namespaces[ns].items = [];
+    this.namespaces[ns].pagination = {
       items: [],
       limit: 0,
       skip: 0,
       total: 0,
     };
-    this.item = undefined;
+    this.namespaces[ns].item = undefined;
   }
 
   @action.bound
@@ -130,50 +214,56 @@ export default class ServiceStore {
   }
 
   @action
-  async find(params) {
+  async find(options) {
+    const ns = this.getNamespace(options);
+
     try {
-      this.isFindPending = true;
-      const items = await this.service.find(params);
-      this.setItems(items)
+      this.namespaces[ns].isFindPending = true;
+      const items = await this.service.find(options);
+      this.setItems(items, options);
     } catch (error) {
-      this.errorOnFind = error;
+      this.namespaces[ns].errorOnFind = error;
     } finally {
-      this.isFindPending = false;
+      this.namespaces[ns].isFindPending = false;
     }
   }
 
   @action
-  async get(id, params) {
+  async get(id, options) {
+    const ns = this.getNamespace(options);
+
     try {
-      this.isGetPending = true;
-      const item = await this.service.get(id, params);
-      this.setItem(item);
+      this.namespaces[ns].isGetPending = true;
+      const item = await this.service.get(id, options);
+      this.setItem(item, options);
     } catch (error) {
-      this.errorOnGet = error;
+      this.namespaces[ns].errorOnGet = error;
     } finally {
-      this.isGetPending = false;
+      this.namespaces[ns].isGetPending = false;
     }
   }
 
   @action
-  async create(data, params) {
+  async create(data, options) {
+    const ns = this.getNamespace(options);
+
     try {
-      this.isCreatePending = true;
-      const item = await this.service.create(data, params);
-      this.setItem(item);
+      this.namespaces[ns].isCreatePending = true;
+      const item = await this.service.create(data, options);
+      this.setItem(item, options);
     } catch (error) {
-      this.errorOnCreate = error;
+      this.namespaces[ns].errorOnCreate = error;
     } finally {
-      this.isCreatePending = false;
+      this.namespaces[ns].isCreatePending = false;
     }
   }
 
   @action
-  async update(ids, data, params) {
+  async update(id, data, params) {
     try {
       this.isUpdatePending = true;
-      const item = await this.service.update(data, params);
-      this.patchItems(item);
+      const item = await this.service.update(id, data, params);
+      this.updateItem(item);
     } catch (error) {
       this.errorOnUpdate = error;
     } finally {
@@ -182,11 +272,11 @@ export default class ServiceStore {
   }
 
   @action
-  async patch(ids, data, params) {
+  async patch(id, data, params) {
     try {
       this.isPatchPending = true;
-      const item = await this.service.patch(data, params);
-      this.patchItems(item);
+      const item = await this.service.patch(id, data, params);
+      this.updateItem(item);
     } catch (error) {
       this.errorOnPatch = error;
     } finally {
@@ -195,11 +285,11 @@ export default class ServiceStore {
   }
 
   @action
-  async remove(ids, params) {
+  async remove(id, params) {
     try {
       this.isRemovePending = true;
-      const items = await this.service.remove(ids);
-      this.removeItems(items);
+      const item = await this.service.remove(id);
+      this.removeItem(item);
     } catch (error) {
       this.errorOnRemove = error;
     } finally {

@@ -1,4 +1,4 @@
-module.exports = function(api) {
+module.exports = function (api) {
   api.cache(false);
   return {
     presets: ['@babel/preset-env'],
@@ -6,6 +6,7 @@ module.exports = function(api) {
       ['@babel/plugin-proposal-decorators', { legacy: true }],
       '@babel/plugin-proposal-class-properties',
       '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-transform-runtime',
     ],
   };
 };
