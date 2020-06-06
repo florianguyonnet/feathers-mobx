@@ -34,26 +34,6 @@ createServiceStore(feathers, 'todos', {
 }
 ```
 
-#### items
-
-- ...
-
-#### item
-
-- ...
-
-#### pagination
-
-- ...
-
-#### is<Method>Pending
-
-- ...
-
-#### errorOn<Method>
-
-- ...
-
 ### Actions
 
 ```js
@@ -73,28 +53,27 @@ createServiceStore(feathers, 'todos', {
 
 #### find(params)
 
-- ...
+- `sotre.find({ ...params })`
 
 #### get(id, params)
 
-- ...
+- `sotre.get(id, { ...params })`
 
 #### create(data, params)
 
-- ...
+- `sotre.get({ ...data }, { ...params })`
 
-#### update(data, params)
+#### update(id, data, params)
 
-- ...
+- `sotre.update(null, { ...data }, { ...params })`
 
-#### patch(data, params)
+#### patch(id, data, params)
 
-- ...
+- `sotre.patch(null, { ...data }, { ...params })`
 
+#### remove(id, params)
 
-#### remove(data, params)
-
-- ...
+- `sotre.remove(null, { ...params })`
 
 #### clearData
 
@@ -107,3 +86,45 @@ createServiceStore(feathers, 'todos', {
 #### clearError
 
 - reset all error observables to `null`
+
+### Namespaces
+
+Namespaces is a feature designed to handle different sets of items at the same time.
+
+#### Find
+
+```js
+store.find({ namespace: 'foo' });
+console.log(store.namespaces.foo.items);
+```
+
+#### Get
+
+```js
+store.get(id, { namespace: 'foo' });
+console.log(store.namespaces.foo.item);
+```
+
+#### Options
+
+```js
+store.namespaces.foo.insertCreated = true; // will insert created socket items into the namespaces
+```
+
+⚠️ `update`, `patch` and `remove` actions are not scoped in each namespaces. So, the following code will not work:
+
+```js
+todoStore.namespaces.foo.isUpdatePending; // NO
+todoStore.isUpdatePending; // YES
+```
+
+### Options
+
+#### insertCreated
+
+- will insert created socket items into items
+
+```js
+store.insertCreated = true; 
+store.namespaces.foo.insertCreated = true; 
+```

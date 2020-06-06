@@ -288,7 +288,7 @@ export default class ServiceStore {
   async remove(id, params) {
     try {
       this.isRemovePending = true;
-      const item = await this.service.remove(id);
+      const item = await this.service.remove(id, params);
       this.removeItem(item);
     } catch (error) {
       this.errorOnRemove = error;
