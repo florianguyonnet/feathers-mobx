@@ -162,6 +162,12 @@ export default class ServiceStore {
     });
   }
 
+  syncCreatedItems(value = true, namespace) {
+    const ns = this.getNamespace({ namespace });
+
+    this.namespaces[ns].insertCreated = value;
+  }
+
   @action.bound
   clearPending(options = {}) {
     const ns = this.getNamespace(options);
