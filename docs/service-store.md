@@ -105,12 +105,6 @@ store.get(id, { namespace: 'foo' });
 console.log(store.namespaces.foo.item);
 ```
 
-#### Options
-
-```js
-store.namespaces.foo.insertCreated = true; // will insert created socket items into the namespaces
-```
-
 ⚠️ `update`, `patch` and `remove` actions are not scoped in each namespaces. So, the following code will not work:
 
 ```js
@@ -120,11 +114,11 @@ todoStore.isUpdatePending; // YES
 
 ### Options
 
-#### insertCreated
+#### syncCreatedItems
 
 - will insert created socket items into items
 
 ```js
-store.insertCreated = true; 
-store.namespaces.foo.insertCreated = true; 
+store.syncCreatedItems(); 
+store.syncCreatedItems(true, { namespace: 'foo' }); 
 ```
