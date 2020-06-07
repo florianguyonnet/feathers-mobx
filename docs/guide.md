@@ -46,16 +46,20 @@ export default observer(() => {
 
   useEffect(() => {
     todoStore.find();
+    todoStore.find({ namespace: 'foo', userId: 'userId' });
   }, []);
 
   return (
     <div className="todos">
       <div>{todoStore.isFindPending && 'loading...'}</div>
+      <div>{todoStore.namespaces.foo.isFindPending && 'loading...'}</div>
       <div>{todoStore.errorOnFind?.message}</div>
+      <div>{todoStore.namespaces.foo.errorOnFind?.message}</div>
       {todoStore.items?.map(todo => 
-        <div className="todo">
-          {todo.name}
-        </div>
+        <div className="todo">{todo.name}</div>
+      )}
+      {todoStore.namespaces.fooTodos.items?.map(todo => 
+        <div className="todo">{todo.name}</div>
       )}
     </div>
   );
