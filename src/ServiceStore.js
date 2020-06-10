@@ -118,7 +118,7 @@ export default class ServiceStore {
   setItems(data, options = {}) {
     const ns = this.getNamespace(options);
 
-    if (data.total) {
+    if (data.data) {
       this.namespaces[ns].pagination.items = data.data;
       this.namespaces[ns].pagination.limit = data.limit;
       this.namespaces[ns].pagination.skip = data.skip;
