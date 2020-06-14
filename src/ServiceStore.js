@@ -118,7 +118,7 @@ export default class ServiceStore {
   setItems(data, options = {}) {
     const ns = this.getNamespace(options);
 
-    if (data.data) {
+    if (data.total) {
       this.namespaces[ns].pagination.items = data.data;
       this.namespaces[ns].pagination.limit = data.limit;
       this.namespaces[ns].pagination.skip = data.skip;
@@ -126,12 +126,14 @@ export default class ServiceStore {
       data = data.data;
     }
 
-    this.namespaces[ns].items = [
-      ...this.namespaces[ns].items.filter(
-        (item) => !data.find((i) => i[this.idField] === item[this.idField])
-      ),
-      ...data,
-    ];
+    this.namespaces[ns].items = options.clear
+      ? [...data]
+      : [
+          ...this.namespaces[ns].items.filter(
+            (item) => !data.find((i) => i[this.idField] === item[this.idField])
+          ),
+          ...data,
+        ];
   }
 
   updateItem(item) {
