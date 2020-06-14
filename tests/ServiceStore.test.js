@@ -92,6 +92,13 @@ describe('ServiceStore', () => {
       expect(storeMock.items[1].id).toBe(1);
     });
 
+    it('should not append items if option { clear: true } is defined', () => {
+      storeMock.setItems([{ id: 0 }, { id: 1 }]);
+      storeMock.setItems([{ id: 2 }], { clear: true });
+      expect(storeMock.items.length).toBe(1);
+      expect(storeMock.items[0].id).toBe(2);
+    });
+
     describe("(namespace's features)", () => {
       it('should set items in namespace', () => {
         storeMock.setItems([{ id: 0 }, { id: 1 }], {
